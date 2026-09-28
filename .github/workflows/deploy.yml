@@ -1,0 +1,33 @@
+name: Deploy NextJS StudyNotion Site
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Deploy & Build Next.js on VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            TARGET_DIR="/home/nguyentranthaomy-study/htdocs"
+            mkdir -p $TARGET_DIR
+            cd $TARGET_DIR
+            git config --global --add safe.directory $TARGET_DIR
+            if [ -d ".git" ]; then
+              git fetch --all
+              git reset --hard origin/main || git reset --hard origin/master
+            else
+              git clone https://github.com/my-nguyen2402/StudyNotion-NextJS.git .
+            fi
+            npm install --legacy-peer-deps
+            npm run build
+            chown -R nguyentranthaomy-study:nguyentranthaomy-study $TARGET_DIR
